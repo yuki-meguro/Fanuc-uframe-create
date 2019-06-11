@@ -1,0 +1,93 @@
+--* coding: Shift-jis *--
+--
+--  --------------------------------------
+--  Released under the Apache 2.0 License.
+--  Yuki Meguro
+--  --------------------------------------
+--
+--  --------------------------------------
+--  Author: Yuki Meguro
+--
+--  Description:
+--    UFRAME Create
+--  
+--      arg[1] = X start point
+--      arg[2] = X-axis direction point
+--      arg[3] = Y-axis direction point
+--      arg[4] = Origin
+--      arg[5] = Set UFRAME No.
+--
+--  Dependancies: none
+--  --------------------------------------
+
+PROGRAM uframe_c
+%ALPHABETIZE
+%NOLOCKGROUP
+%SYSTEM
+%NOPAUSESHFT
+%NOPAUSE=ERROR+COMMAND+TPENABLE
+%COMMENT = 'UFRAME Create'
+TYPE
+    memory = STRUCTURE
+        ls: ARRAY[5] OF INTEGER
+    ENDSTRUCTURE
+VAR
+    uframe: POSITION
+
+    ROUTINE get_prm(prm_no: INTEGER): INTEGER
+    CONST
+        null = 17042
+    VAR
+        stat: INTEGER
+        data_type: INTEGER
+        get_int: INTEGER
+        dummy_real: REAL    --unused
+        dummy_str: STRING[10]   --unused
+    BEGIN
+        GET_TPE_PRM(prm_no, data_type, get_int, dummy_real, dummy_str, stat)
+        IF data_type <> 1 THEN
+            stat = null
+            WRITE TPERROR (CHR(128), CR)
+            WRITE TPERROR('PRM Value Err.', CR)
+            WRITE(data_type)
+        ENDIF
+        RETURN(get_int)
+    END get_prm
+
+    ROUTINE uframe_get(prm: memory): POSITION
+    VAR
+        stat: INTEGER
+        i: INTEGER
+        pos: ARRAY[4] OF POSITION
+        pos_ans: POSITION
+    BEGIN
+        FOR i = 1 TO 4 DO
+            pos[i] = GET_POS_REG(prm.ls[i], stat)
+        ENDFOR
+        pos_ans = FRAME(pos[1], pos[2], pos[3], pos[4])
+        RETURN(pos_ans)
+    END uframe_get
+
+    ROUTINE uframe_set(uframe_pos: POSITION; prm: memory)
+    VAR
+        uframe_no: INTEGER
+    BEGIN
+        uframe_no = prm.ls[5]
+        $MNUFRAME[1, uframe_no] = uframe_pos 
+    END uframe_set
+
+    ROUTINE main
+    VAR
+        i: INTEGER
+        prm: memory
+    BEGIN
+        FOR i = 1 TO 5 DO
+            prm.ls[i] = get_prm(i)
+        ENDFOR
+        uframe = uframe_get(prm)
+        uframe_set(uframe, prm)
+    END main
+
+BEGIN
+    main
+END uframe_c
